@@ -100,7 +100,11 @@ class Query implements QueryInterface {
                 $part = $args[$key];
                 if (!$part instanceof SafeString) {
                     // Escape value
-                    $part = SafeString::escape($part, false, $quote);
+                    if (is_array($part)) {
+                        $part = '( '.SafeString::escapeArray($part).' )';
+                    } else {
+                        $part = SafeString::escape($part, false, $quote);
+                    }
                 }
             }
 

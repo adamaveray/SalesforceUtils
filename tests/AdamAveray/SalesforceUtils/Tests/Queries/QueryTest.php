@@ -107,6 +107,17 @@ class QueryTest extends \PHPUnit\Framework\TestCase {
                     'one' => new SafeString('"special'."\t".'chars"')
                 ],
             ],
+            'Array param' => [
+                'TEST SOQL IN ( \'item one\', \'item two\', \'item three\' )',
+                'TEST SOQL IN :one',
+                [
+                    'one' => [
+                        'item one',
+                        'item two',
+                        'item three',
+                    ],
+                ],
+            ],
             'Anonymous params' => [
                 'TEST SOQL \'param one\' \'param two\'',
                 'TEST SOQL ? ?',

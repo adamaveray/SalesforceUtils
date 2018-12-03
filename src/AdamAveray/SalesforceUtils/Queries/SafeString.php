@@ -49,6 +49,29 @@ class SafeString {
      * @return SafeString
      */
     public static function escape($value, bool $isLike = false, bool $quote = false): SafeString {
+        $safe = self::escapeValue($value, $isLike, $quote);
+        return new SafeString($safe);
+    }
+
+    /**
+     * @param array $value The array of values to escape
+     * @return SafeString The array merged into a SOQL IN compatible string
+     */
+    public static function escapeArray(array $value): SafeString {
+        $out = [];
+        foreach ($value as $item) {
+            $out[] = self::escapeValue($item, false, true);
+        }
+        return new SafeString(implode(', ', $out));
+    }
+
+    /**
+     * @param mixed $value The value to escape
+     * @param bool $isLike Whether the value is for a LIKE comparison
+     * @param bool $quote Whether to quote the value
+     * @return string The escaped string value
+     */
+    private static function escapeValue($value, bool $isLike = false, bool $quote = false): string {
         if ($value === null) {
             $safe = self::VALUE_NULL;
         } else if (is_bool($value)) {
@@ -72,7 +95,6 @@ class SafeString {
                 $safe = self::QUOTE_OPEN.$safe.self::QUOTE_CLOSE;
             }
         }
-
-        return new SafeString($safe);
+        return $safe;
     }
 }

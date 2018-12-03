@@ -92,4 +92,38 @@ class SafeStringTest extends \PHPUnit\Framework\TestCase {
             ],
         ];
     }
+
+    /**
+     * @covers ::escape
+     * @covers ::<!public>
+     * @depends testValuePreservation
+     * @dataProvider escapeArrayDataProvider
+     */
+    public function testEscapeArray(string $expected, $value, $isLike = null, $quote = null) {
+        $object = SafeString::escapeArray($value, $isLike ?? false, $quote ?? true);
+        $output = (string)$object;
+
+        $this->assertEquals($expected, $output, 'Values should be escaped correctly');
+    }
+
+    public function escapeArrayDataProvider(): array {
+        return [
+            'Empty' => [
+                '',
+                [],
+            ],
+            'Single string' => [
+                '\'item\'',
+                ['item'],
+            ],
+            'Multiple strings' => [
+                '\'item one\', \'item two\', \'item three\'',
+                ['item one', 'item two', 'item three'],
+            ],
+            'Mixed values' => [
+                '\'string\', '.SafeString::VALUE_TRUE.', '.SafeString::VALUE_FALSE.', '.SafeString::VALUE_NULL.', 123',
+                ['string', true, false, null, 123],
+            ],
+        ];
+    }
 }
