@@ -132,7 +132,11 @@ class Client extends \Phpforce\SoapClient\Client implements ClientInterface {
     /** {@inheritdoc} */
     public function upsertOne($externalIdFieldName, SObject $object, $type): UpsertResult {
         $result = $this->upsert($externalIdFieldName, [$object], $type);
-        return $result[0];
+        $singleResult = $result[0];
+        if ($singleResult instanceof \stdClass) {
+            $singleResult = self::castGenericObject($singleResult, UpsertResult::class);
+        }
+        return $singleResult;
     }
 
     /**
@@ -143,5 +147,24 @@ class Client extends \Phpforce\SoapClient\Client implements ClientInterface {
             $this->writer = new Writer($this);
         }
         return $this->writer;
+    }
+
+    /**
+     * @param \stdClass $genericObject The generic object to cast
+     * @param string $className The name of the class to instantiate
+     * @return object An instance of $className with properties from $genericObject assigned
+     */
+    private static function castGenericObject(\stdClass $genericObject, string $className): object {
+        $convertedObject = new $className;
+        $reflectionClass = new \ReflectionClass($convertedObject);
+        foreach ((array) $genericObject as $key => $value) {
+            if ($reflectionClass->hasProperty($key)) {
+                $property =$reflectionClass->getProperty($key);
+                $property->setAccessible(true);
+                $property->setValue($convertedObject, $value);
+                $property->setAccessible(false);
+            }
+        }
+        return $convertedObject;
     }
 }
