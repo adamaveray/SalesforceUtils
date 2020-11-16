@@ -1,8 +1,8 @@
 language: php
 
 php:
-  - '7.2'
-  - '7.1'
+  - '7.4'
+  - '7.3'
 
 script: echo "$(./vendor/bin/phpunit --configuration tests/phpunit.xml --coverage-clover tests/logs/clover.xml)"
 
