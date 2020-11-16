@@ -8,6 +8,10 @@ class SoapClientFactory extends BaseSoapClientFactory
 {
     public function factory($wsdl, $extraSoapOptions = null)
     {
+        if ($wsdl === null) {
+            throw new \InvalidArgumentException('WSDL cannot be null');
+        }
+
         $soapOptions = array_merge(
             [
                 'trace' => 1,
