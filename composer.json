@@ -18,6 +18,7 @@
   "minimum-stability": "dev",
   "require": {
     "php": ">=7.3",
+    "ext-soap": "*",
     "phpforce/soap-client": "dev-partner"
   },
   "require-dev": {
