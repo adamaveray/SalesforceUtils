@@ -1,8 +1,8 @@
 {
   "scripts": {
     "test": "vendor/bin/phpunit --configuration tests/phpunit.xml && npm run format-check",
-    "format": "prettier --write 'src/**/*.{php,xml}' 'tests/**/*.{php,xml}' package.json composer.json './.*.{json,yml}'",
-    "format-check": "prettier --check 'src/**/*.{php,xml}' 'tests/**/*.{php,xml}' package.json composer.json './.*.{json,yml}'"
+    "format": "prettier --write 'src/**/*.{php,xml}' 'tests/**/*.{php,xml,json,yml,wsdl}' package.json composer.json './.*.{json,yml}'",
+    "format-check": "prettier --check 'src/**/*.{php,xml}' 'tests/**/*.{php,xml,json,yml,wsdl}' package.json composer.json './.*.{json,yml}'"
   },
   "devDependencies": {
     "@prettier/plugin-php": "^0.16.0",
