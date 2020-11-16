@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace AdamAveray\SalesforceUtils\Tests\Queries;
 
@@ -14,12 +15,12 @@ class SafeStringTest extends \PHPUnit\Framework\TestCase
      * @covers ::__toString
      * @covers ::<!public>
      */
-    public function testValuePreservation()
+    public function testValuePreservation(): void
     {
         $original = 'Test Value';
         $object = new SafeString($original);
 
-        $this->assertEquals(
+        self::assertEquals(
             $original,
             (string) $object,
             'The original string should be returned when casting to string',
@@ -37,70 +38,73 @@ class SafeStringTest extends \PHPUnit\Framework\TestCase
         $value,
         $isLike = null,
         $quote = null
-    ) {
+    ): void {
         $object = SafeString::escape($value, $isLike ?? false, $quote ?? true);
         $output = (string) $object;
 
-        $this->assertEquals(
+        self::assertEquals(
             $expected,
             $output,
             'Values should be escaped correctly',
         );
     }
 
-    public function escapeDataProvider(): array
+    public function escapeDataProvider(): iterable
     {
-        return [
-            'Null' => [SafeString::VALUE_NULL, null],
-            'True' => [SafeString::VALUE_TRUE, true],
-            'False' => [SafeString::VALUE_FALSE, false],
-            'Integers' => ['12345', 12345],
-            'Floats' => ['12345.6789', 12345.6789],
-            'Dates' => [
-                '2000-01-01T12:00:00+00:00',
-                new \DateTimeImmutable(
-                    '2000-01-01 12:00:00',
-                    new \DateTimeZone('UTC'),
-                ),
-            ],
-            'Regular Strings' => [
-                SafeString::QUOTE_OPEN .
-                'test string' .
-                SafeString::QUOTE_CLOSE,
-                'test string',
-            ],
-            'Escaped Strings' => [
-                SafeString::QUOTE_OPEN .
-                't\\\'e\\nst%_ st\\tring' .
-                SafeString::QUOTE_CLOSE,
-                't\'e' . "\n" . 'st%_ st' . "\t" . 'ring',
-            ],
-            'Like Escaped Strings' => [
-                SafeString::QUOTE_OPEN .
-                't\\\'e\\nst\\%\\_ st\\tring' .
-                SafeString::QUOTE_CLOSE,
-                't\'e' . "\n" . 'st%_ st' . "\t" . 'ring',
-                true,
-                true,
-            ],
-            'Non-Quoted Regular Strings' => [
-                'test string',
-                'test string',
-                false,
-                false,
-            ],
-            'Non-Quoted Escaped Strings' => [
-                't\\\'e\\nst st\\tring',
-                't\'e' . "\n" . 'st st' . "\t" . 'ring',
-                false,
-                false,
-            ],
-            'Non-Quoted Like Escaped Strings' => [
-                't\\\'e\\nst\\%\\_ st\\tring',
-                't\'e' . "\n" . 'st%_ st' . "\t" . 'ring',
-                true,
-                false,
-            ],
+        yield 'Null' => [SafeString::VALUE_NULL, null];
+        yield 'True' => [SafeString::VALUE_TRUE, true];
+        yield 'False' => [SafeString::VALUE_FALSE, false];
+        yield 'Integers' => ['12345', 12345];
+        yield 'Floats' => ['12345.6789', 12345.6789];
+
+        yield 'Dates' => [
+            '2000-01-01T12:00:00+00:00',
+            new \DateTimeImmutable(
+                '2000-01-01 12:00:00',
+                new \DateTimeZone('UTC'),
+            ),
+        ];
+
+        yield 'Regular Strings' => [
+            SafeString::QUOTE_OPEN . 'test string' . SafeString::QUOTE_CLOSE,
+            'test string',
+        ];
+
+        yield 'Escaped Strings' => [
+            SafeString::QUOTE_OPEN .
+            't\\\'e\\nst%_ st\\tring' .
+            SafeString::QUOTE_CLOSE,
+            't\'e' . "\n" . 'st%_ st' . "\t" . 'ring',
+        ];
+
+        yield 'Like Escaped Strings' => [
+            SafeString::QUOTE_OPEN .
+            't\\\'e\\nst\\%\\_ st\\tring' .
+            SafeString::QUOTE_CLOSE,
+            't\'e' . "\n" . 'st%_ st' . "\t" . 'ring',
+            true,
+            true,
+        ];
+
+        yield 'Non-Quoted Regular Strings' => [
+            'test string',
+            'test string',
+            false,
+            false,
+        ];
+
+        yield 'Non-Quoted Escaped Strings' => [
+            't\\\'e\\nst st\\tring',
+            't\'e' . "\n" . 'st st' . "\t" . 'ring',
+            false,
+            false,
+        ];
+
+        yield 'Non-Quoted Like Escaped Strings' => [
+            't\\\'e\\nst\\%\\_ st\\tring',
+            't\'e' . "\n" . 'st%_ st' . "\t" . 'ring',
+            true,
+            false,
         ];
     }
 
@@ -115,7 +119,7 @@ class SafeStringTest extends \PHPUnit\Framework\TestCase
         $value,
         $isLike = null,
         $quote = null
-    ) {
+    ): void {
         $object = SafeString::escapeArray(
             $value,
             $isLike ?? false,
@@ -123,32 +127,33 @@ class SafeStringTest extends \PHPUnit\Framework\TestCase
         );
         $output = (string) $object;
 
-        $this->assertEquals(
+        self::assertEquals(
             $expected,
             $output,
             'Values should be escaped correctly',
         );
     }
 
-    public function escapeArrayDataProvider(): array
+    public function escapeArrayDataProvider(): iterable
     {
-        return [
-            'Empty' => ['', []],
-            'Single string' => ['\'item\'', ['item']],
-            'Multiple strings' => [
-                '\'item one\', \'item two\', \'item three\'',
-                ['item one', 'item two', 'item three'],
-            ],
-            'Mixed values' => [
-                '\'string\', ' .
-                SafeString::VALUE_TRUE .
-                ', ' .
-                SafeString::VALUE_FALSE .
-                ', ' .
-                SafeString::VALUE_NULL .
-                ', 123',
-                ['string', true, false, null, 123],
-            ],
+        yield 'Empty' => ['', []];
+
+        yield 'Single string' => ['\'item\'', ['item']];
+
+        yield 'Multiple strings' => [
+            '\'item one\', \'item two\', \'item three\'',
+            ['item one', 'item two', 'item three'],
+        ];
+
+        yield 'Mixed values' => [
+            '\'string\', ' .
+            SafeString::VALUE_TRUE .
+            ', ' .
+            SafeString::VALUE_FALSE .
+            ', ' .
+            SafeString::VALUE_NULL .
+            ', 123',
+            ['string', true, false, null, 123],
         ];
     }
 }

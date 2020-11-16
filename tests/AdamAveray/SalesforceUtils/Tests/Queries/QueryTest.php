@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace AdamAveray\SalesforceUtils\Tests\Queries;
 
@@ -19,7 +20,7 @@ class QueryTest extends \PHPUnit\Framework\TestCase
      * @param array|null $methods
      * @return MockObject|ClientInterface
      */
-    private function getClient(array $methods = null)
+    private function getClient(array $methods = null): ClientInterface
     {
         $builder = $this->getMockBuilder(ClientInterface::class);
         if ($methods !== null) {
@@ -38,7 +39,7 @@ class QueryTest extends \PHPUnit\Framework\TestCase
         string $string,
         array $values,
         &$iterator = null
-    ) {
+    ): ClientInterface {
         $iterator = new DummyRecordIterator($values);
 
         $client = $this->getClient(['query']);
@@ -61,78 +62,83 @@ class QueryTest extends \PHPUnit\Framework\TestCase
         string $rawQuery,
         $globalArgs = null,
         $thisArgs = null
-    ) {
+    ): void {
         $query = new Query($this->getClient(), $rawQuery, $globalArgs);
 
         $method = new \ReflectionMethod($query, 'build');
         $method->setAccessible(true);
         $result = $method->invoke($query, $thisArgs);
 
-        $this->assertEquals(
+        self::assertEquals(
             $expected,
             $result,
             'The query should be processed and build correctly',
         );
     }
 
-    public function buildDataProvider(): array
+    public function buildDataProvider(): iterable
     {
-        return [
-            'No params' => ['TEST SOQL', 'TEST SOQL'],
-            'Global params' => [
-                'TEST SOQL \'test param one\' \'test param two\'',
-                'TEST SOQL :one :two',
-                [
-                    'one' => 'test param one',
-                    'two' => 'test param two',
-                ],
+        yield 'No params' => ['TEST SOQL', 'TEST SOQL'];
+
+        yield 'Global params' => [
+            'TEST SOQL \'test param one\' \'test param two\'',
+            'TEST SOQL :one :two',
+            [
+                'one' => 'test param one',
+                'two' => 'test param two',
             ],
-            'Local params' => [
-                'TEST SOQL \'test param one\' \'test param two\'',
-                'TEST SOQL :one :two',
-                null,
-                [
-                    'one' => 'test param one',
-                    'two' => 'test param two',
-                ],
+        ];
+
+        yield 'Local params' => [
+            'TEST SOQL \'test param one\' \'test param two\'',
+            'TEST SOQL :one :two',
+            null,
+            [
+                'one' => 'test param one',
+                'two' => 'test param two',
             ],
-            'Mixed params' => [
-                'TEST SOQL \'global param one\' \'local param two\'',
-                'TEST SOQL :one :two',
-                [
-                    'one' => 'global param one',
-                    'two' => 'global param two',
-                ],
-                [
-                    'two' => 'local param two',
-                ],
+        ];
+
+        yield 'Mixed params' => [
+            'TEST SOQL \'global param one\' \'local param two\'',
+            'TEST SOQL :one :two',
+            [
+                'one' => 'global param one',
+                'two' => 'global param two',
             ],
-            'Unquoted param' => [
-                'TEST SOQL param one',
-                'TEST SOQL ::one',
-                [
-                    'one' => 'param one',
-                ],
+            [
+                'two' => 'local param two',
             ],
-            'Safe string param' => [
-                'TEST SOQL "special' . "\t" . 'chars"',
-                'TEST SOQL :one',
-                [
-                    'one' => new SafeString('"special' . "\t" . 'chars"'),
-                ],
+        ];
+
+        yield 'Unquoted param' => [
+            'TEST SOQL param one',
+            'TEST SOQL ::one',
+            [
+                'one' => 'param one',
             ],
-            'Array param' => [
-                'TEST SOQL IN ( \'item one\', \'item two\', \'item three\' )',
-                'TEST SOQL IN :one',
-                [
-                    'one' => ['item one', 'item two', 'item three'],
-                ],
+        ];
+
+        yield 'Safe string param' => [
+            'TEST SOQL "special' . "\t" . 'chars"',
+            'TEST SOQL :one',
+            [
+                'one' => new SafeString('"special' . "\t" . 'chars"'),
             ],
-            'Anonymous params' => [
-                'TEST SOQL \'param one\' \'param two\'',
-                'TEST SOQL ? ?',
-                ['param one', 'param two'],
+        ];
+
+        yield 'Array param' => [
+            'TEST SOQL IN ( \'item one\', \'item two\', \'item three\' )',
+            'TEST SOQL IN :one',
+            [
+                'one' => ['item one', 'item two', 'item three'],
             ],
+        ];
+
+        yield 'Anonymous params' => [
+            'TEST SOQL \'param one\' \'param two\'',
+            'TEST SOQL ? ?',
+            ['param one', 'param two'],
         ];
     }
 
@@ -150,7 +156,7 @@ class QueryTest extends \PHPUnit\Framework\TestCase
      * @covers ::query
      * @depends testBuild
      */
-    public function testQuery()
+    public function testQuery(): void
     {
         $string = 'SOQL QUERY TEST';
         $stringRaw = 'SOQL QUERY ::test';
@@ -160,7 +166,7 @@ class QueryTest extends \PHPUnit\Framework\TestCase
         $query = new Query($client, $stringRaw);
 
         $result = $query->query($args);
-        $this->assertSame(
+        self::assertSame(
             $expected,
             $result,
             'The result of ClientInterface::query() should be passed through',
@@ -171,7 +177,7 @@ class QueryTest extends \PHPUnit\Framework\TestCase
      * @covers ::queryAll
      * @depends testBuild
      */
-    public function testQueryAll()
+    public function testQueryAll(): void
     {
         $values = ['a', 'b', 'c'];
 
@@ -183,7 +189,7 @@ class QueryTest extends \PHPUnit\Framework\TestCase
         $query = new Query($client, $stringRaw);
 
         $result = $query->queryAll($args);
-        $this->assertSame(
+        self::assertSame(
             $values,
             $result,
             'The iterator’s values should be passed through',
@@ -194,7 +200,7 @@ class QueryTest extends \PHPUnit\Framework\TestCase
      * @covers ::queryOne
      * @depends testBuild
      */
-    public function testQueryOne()
+    public function testQueryOne(): void
     {
         $expected = new SObject();
 
@@ -207,7 +213,7 @@ class QueryTest extends \PHPUnit\Framework\TestCase
         $query = new Query($client, $stringRaw);
 
         $result = $query->queryOne($args);
-        $this->assertSame(
+        self::assertSame(
             $expected,
             $result,
             'The result of ClientInterface::query() should be passed through',
@@ -218,6 +224,6 @@ class QueryTest extends \PHPUnit\Framework\TestCase
         $query = new Query($client, $stringRaw);
 
         $result = $query->queryOne($args);
-        $this->assertNull($result, 'Null should be returned when no results');
+        self::assertNull($result, 'Null should be returned when no results');
     }
 }

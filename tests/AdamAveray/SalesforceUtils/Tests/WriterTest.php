@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace AdamAveray\SalesforceUtils\Tests\Queries;
 
@@ -26,7 +27,7 @@ class WriterTest extends \PHPUnit\Framework\TestCase
      * @param array|null $methods
      * @return MockObject|ClientInterface
      */
-    private function getClient(array $methods = null)
+    private function getClient(array $methods = null): ClientInterface
     {
         $builder = $this->getMockBuilder(ClientInterface::class);
         if ($methods !== null) {
@@ -40,7 +41,7 @@ class WriterTest extends \PHPUnit\Framework\TestCase
      * @covers ::create
      * @covers ::<!public>
      */
-    public function testCreate()
+    public function testCreate(): void
     {
         $type = 'Test';
         $id = '12345';
@@ -57,7 +58,7 @@ class WriterTest extends \PHPUnit\Framework\TestCase
 
         $client = $this->getClient(['createOne']);
         $client
-            ->expects($this->exactly(3))
+            ->expects(self::exactly(3))
             ->method('createOne')
             ->with($object, $type)
             ->willReturn($saveResult);
@@ -66,7 +67,7 @@ class WriterTest extends \PHPUnit\Framework\TestCase
 
         // Values
         $result = $writer->create($type, $values);
-        $this->assertEquals(
+        self::assertEquals(
             $saveResult,
             $result,
             'The created object ID should be returned in the SaveResult',
@@ -74,7 +75,7 @@ class WriterTest extends \PHPUnit\Framework\TestCase
 
         // Pre-made object
         $result = $writer->create($type, $object);
-        $this->assertEquals(
+        self::assertEquals(
             $saveResult,
             $result,
             'The created object ID should be returned in the SaveResult',
@@ -85,7 +86,7 @@ class WriterTest extends \PHPUnit\Framework\TestCase
         $originalObject = clone $object;
         $object->{Writer::FIELD_RECORD_TYPE_ID} = $recordTypeId;
         $result = $writer->create($type, $originalObject, $recordTypeId);
-        $this->assertEquals(
+        self::assertEquals(
             $saveResult,
             $result,
             'The provided record type should be assigned on the create object',
@@ -98,13 +99,13 @@ class WriterTest extends \PHPUnit\Framework\TestCase
      * @covers ::<!public>
      * @expectedException \AdamAveray\SalesforceUtils\Exceptions\SaveFailureException
      */
-    public function testCreateFailure()
+    public function testCreateFailure(): void
     {
         $saveResult = new DummySaveResult(null, false);
 
         $client = $this->getClient(['createOne']);
         $client
-            ->expects($this->once())
+            ->expects(self::once())
             ->method('createOne')
             ->willReturn($saveResult);
 
@@ -117,7 +118,7 @@ class WriterTest extends \PHPUnit\Framework\TestCase
      * @covers ::update
      * @covers ::<!public>
      */
-    public function testUpdate()
+    public function testUpdate(): void
     {
         $type = 'Test';
         $id = '12345';
@@ -137,7 +138,7 @@ class WriterTest extends \PHPUnit\Framework\TestCase
 
         $client = $this->getClient(['updateOne']);
         $client
-            ->expects($this->exactly(2))
+            ->expects(self::exactly(2))
             ->method('updateOne')
             ->with($object, $type)
             ->willReturn($saveResult);
@@ -146,7 +147,7 @@ class WriterTest extends \PHPUnit\Framework\TestCase
 
         // Update from objecrt
         $result = $writer->update($type, $base, $values);
-        $this->assertEquals(
+        self::assertEquals(
             $saveResult,
             $result,
             'The updated object ID should be returned in the SaveResult',
@@ -154,7 +155,7 @@ class WriterTest extends \PHPUnit\Framework\TestCase
 
         // Update from ID
         $result = $writer->update($type, $id, $values);
-        $this->assertEquals(
+        self::assertEquals(
             $saveResult,
             $result,
             'The updated object ID should be returned in the SaveResult',
@@ -167,13 +168,13 @@ class WriterTest extends \PHPUnit\Framework\TestCase
      * @covers ::<!public>
      * @expectedException \AdamAveray\SalesforceUtils\Exceptions\SaveFailureException
      */
-    public function testUpdateFailure()
+    public function testUpdateFailure(): void
     {
         $saveResult = new DummySaveResult(null, false);
 
         $client = $this->getClient(['updateOne']);
         $client
-            ->expects($this->once())
+            ->expects(self::once())
             ->method('updateOne')
             ->willReturn($saveResult);
 
@@ -186,66 +187,60 @@ class WriterTest extends \PHPUnit\Framework\TestCase
      * @covers ::<!public>
      * @dataProvider buildSObjectDataProvider
      */
-    public function testBuildSObject($expected, ?string $id, array $values)
-    {
+    public function testBuildSObject(
+        $expected,
+        ?string $id,
+        array $values
+    ): void {
         $writer = $this->getWriter();
         $result = $writer->buildSObject($id, $values);
-        $this->assertEquals(
+        self::assertEquals(
             $expected,
             $result,
             'An SObject with values assigned should be returned',
         );
     }
 
-    public function buildSObjectDataProvider(): array
+    public function buildSObjectDataProvider(): iterable
     {
-        $invoke = function (callable $fn) {
-            return $fn();
-        };
-        return [
-            'Simple' => [
-                $invoke(function () {
-                    $obj = new SObject();
-                    $obj->Id = '12345';
-                    $obj->testOne = 'value one';
-                    $obj->testTwo = 'value two';
-                    return $obj;
-                }),
-                '12345',
-                [
-                    'testOne' => 'value one',
-                    'testTwo' => 'value two',
-                ],
+        $obj = new SObject();
+        $obj->Id = '12345';
+        $obj->testOne = 'value one';
+        $obj->testTwo = 'value two';
+        yield 'Simple' => [
+            $obj,
+            '12345',
+            [
+                'testOne' => 'value one',
+                'testTwo' => 'value two',
             ],
-            'String Cast' => [
-                $invoke(function () {
-                    $obj = new SObject();
-                    $obj->Id = '12345';
-                    $obj->test = 'value';
-                    return $obj;
-                }),
-                '12345',
-                [
-                    'test' => new class {
-                        public function __toString()
-                        {
-                            return 'value';
-                        }
-                    },
-                ],
+        ];
+
+        $obj = new SObject();
+        $obj->Id = '12345';
+        $obj->test = 'value';
+        yield 'String Cast' => [
+            $obj,
+            '12345',
+            [
+                'test' => new class {
+                    public function __toString()
+                    {
+                        return 'value';
+                    }
+                },
             ],
-            'No ID' => [
-                $invoke(function () {
-                    $obj = new SObject();
-                    $obj->testOne = 'value one';
-                    $obj->testTwo = 'value two';
-                    return $obj;
-                }),
-                null,
-                [
-                    'testOne' => 'value one',
-                    'testTwo' => 'value two',
-                ],
+        ];
+
+        $obj = new SObject();
+        $obj->testOne = 'value one';
+        $obj->testTwo = 'value two';
+        yield 'No ID' => [
+            $obj,
+            null,
+            [
+                'testOne' => 'value one',
+                'testTwo' => 'value two',
             ],
         ];
     }

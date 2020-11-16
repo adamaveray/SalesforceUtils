@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace AdamAveray\SalesforceUtils\Tests\Client;
 
@@ -31,7 +32,7 @@ class ClientTest extends \PHPUnit\Framework\TestCase
         &$username = 'username',
         &$password = 'password',
         &$token = 'token'
-    ) {
+    ): Client {
         $soapClient = $this->getMockBuilder(SoapClient::class)
             ->disableOriginalConstructor()
             ->getMock();
@@ -58,23 +59,18 @@ class ClientTest extends \PHPUnit\Framework\TestCase
      * @covers ::prepare
      * @covers ::<!public>
      */
-    public function testPrepare()
+    public function testPrepare(): void
     {
         $soql = 'TEST QUERY';
         $args = ['a', 'b', 'c'];
 
         $client = $this->getClient(['rawQuery']);
         $query = $client->prepare($soql, $args);
-        $this->assertInstanceOf(
-            QueryInterface::class,
-            $query,
-            'A QueryInterface should be returned',
-        );
 
         // Client assigned
         $property = new \ReflectionProperty($query, 'client');
         $property->setAccessible(true);
-        $this->assertEquals(
+        self::assertEquals(
             $client,
             $property->getValue($query),
             'The client should be stored on the query correctly',
@@ -83,7 +79,7 @@ class ClientTest extends \PHPUnit\Framework\TestCase
         // Args assigned
         $property = new \ReflectionProperty($query, 'globalArgs');
         $property->setAccessible(true);
-        $this->assertEquals(
+        self::assertEquals(
             $args,
             $property->getValue($query),
             'The global arguments should be stored on the query correctly',
@@ -92,11 +88,11 @@ class ClientTest extends \PHPUnit\Framework\TestCase
         // Calls rawQuery with assigned SOQL
         $iterator = new RecordIterator($client, new QueryResult());
         $client
-            ->expects($this->once())
+            ->expects(self::once())
             ->method('rawQuery')
             ->with($soql)
             ->willReturn($iterator);
-        $this->assertEquals(
+        self::assertEquals(
             $iterator,
             $query->query(),
             'The rawQuery return value should be passed through',
@@ -107,25 +103,20 @@ class ClientTest extends \PHPUnit\Framework\TestCase
      * @covers ::rawQuery
      * @covers ::<!public>
      */
-    public function testRawQuery()
+    public function testRawQuery(): void
     {
         $query = 'TEST SOQL';
         $queryResult = new QueryResult();
 
         $client = $this->getClient(['call']);
         $client
-            ->expects($this->once())
+            ->expects(self::once())
             ->method('call')
             ->with('query', ['queryString' => $query])
             ->willReturn($queryResult);
 
         $result = $client->rawQuery($query);
-        $this->assertInstanceOf(
-            RecordIterator::class,
-            $result,
-            'The internal generated RecordIterator should be passed through',
-        );
-        $this->assertSame(
+        self::assertSame(
             $queryResult,
             $result->getQueryResult(),
             'The internal generated QueryResult should be set on the generated RecordIterator',
@@ -140,7 +131,7 @@ class ClientTest extends \PHPUnit\Framework\TestCase
      * @covers ::<!public>
      * @dataProvider queriesDataProvider
      */
-    public function testQueries(string $method, $expected)
+    public function testQueries(string $method, $expected): void
     {
         $args = ['a', 'b', 'c'];
         $client = $this->getClient();
@@ -156,7 +147,7 @@ class ClientTest extends \PHPUnit\Framework\TestCase
 
         // Prebuilt query
         $result = $client->{$method}($query, $args);
-        $this->assertSame(
+        self::assertSame(
             $expected,
             $result,
             'The Query method "' .
@@ -168,13 +159,13 @@ class ClientTest extends \PHPUnit\Framework\TestCase
         $string = 'TEST SOQL';
         $client = $this->getClient(['prepare']);
         $client
-            ->expects($this->once())
+            ->expects(self::once())
             ->method('prepare')
             ->with($string)
             ->willReturn($query);
 
         $result = $client->{$method}($string, $args);
-        $this->assertSame(
+        self::assertSame(
             $expected,
             $result,
             'The Query method "' .
@@ -183,18 +174,14 @@ class ClientTest extends \PHPUnit\Framework\TestCase
         );
     }
 
-    public function queriesDataProvider(): array
+    public function queriesDataProvider(): iterable
     {
-        return [
-            'Method `query`' => [
-                'query',
-                $this->getMockBuilder(RecordIterator::class)
-                    ->disableOriginalConstructor()
-                    ->getMock(),
-            ],
-            'Method `queryAll`' => ['queryAll', ['a', 'b', 'c']],
-            'Method `queryOne`' => ['queryOne', new SObject()],
-        ];
+        $mockRecordIterator = $this->getMockBuilder(RecordIterator::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+        yield 'Method `query`' => ['query', $mockRecordIterator];
+        yield 'Method `queryAll`' => ['queryAll', ['a', 'b', 'c']];
+        yield 'Method `queryOne`' => ['queryOne', new SObject()];
     }
 
     /**
@@ -202,8 +189,11 @@ class ClientTest extends \PHPUnit\Framework\TestCase
      * @covers ::<!public>
      * @dataProvider escapeDataProvider
      */
-    public function testEscape(string $input, $isLike = null, $quote = null)
-    {
+    public function testEscape(
+        string $input,
+        $isLike = null,
+        $quote = null
+    ): void {
         $isLike = $isLike ?? false;
         $quote = $quote ?? true;
 
@@ -212,20 +202,18 @@ class ClientTest extends \PHPUnit\Framework\TestCase
         $client = $this->getClient();
         $result = $client->escape($input, $isLike, $quote);
 
-        $this->assertEquals(
+        self::assertEquals(
             $expected,
             $result,
             'An escaped SafeString should be generated',
         );
     }
 
-    public function escapeDataProvider(): array
+    public function escapeDataProvider(): iterable
     {
-        return [
-            'Plain' => ['""test value""'],
-            'Like' => ['""test value""', true],
-            'No-Quote' => ['""test value""', false, true],
-        ];
+        yield 'Plain' => ['""test value""'];
+        yield 'Like' => ['""test value""', true];
+        yield 'No-Quote' => ['""test value""', false, true];
     }
 
     /**
@@ -244,7 +232,7 @@ class ClientTest extends \PHPUnit\Framework\TestCase
         array $expectedArgs,
         array $callArgs,
         string $oneMethod = null
-    ) {
+    ): void {
         $oneMethod = $oneMethod ?? $method . 'One';
         $mirror = new \ReflectionMethod(ClientInterface::class, $oneMethod);
         $returnType = $mirror->getReturnType()->getName();
@@ -252,19 +240,19 @@ class ClientTest extends \PHPUnit\Framework\TestCase
 
         $client = $this->getClient([$method]);
         $client
-            ->expects($this->once())
+            ->expects(self::once())
             ->method($method)
             ->with(...$expectedArgs)
             ->willReturn([$expected, 'b', 'c']);
         $result = $client->{$oneMethod}(...$callArgs);
-        $this->assertSame(
+        self::assertSame(
             $expected,
             $result,
             'The value from the parent method should be returned',
         );
     }
 
-    public function oneHelpersDataProvider(): array
+    public function oneHelpersDataProvider(): iterable
     {
         $type = 'testType';
         $id = '12345';
@@ -273,48 +261,46 @@ class ClientTest extends \PHPUnit\Framework\TestCase
 
         $genericObject = new \stdClass();
 
-        return [
-            'Method `update`' => [
-                'Method' => 'update',
-                'Should Call' => [[$sObject], $type],
-                'Call With' => [$sObject, $type],
-            ],
-            'Method `create`' => [
-                'Method' => 'create',
-                'Should Call' => [[$sObject], $type],
-                'Call With' => [$sObject, $type],
-            ],
-            'Method `create` stdClass' => [
-                'Method' => 'create',
-                'Should Call' => [[$genericObject], $type],
-                'Call With' => [$genericObject, $type],
-            ],
-            'Method `delete`' => [
-                'Method' => 'delete',
-                'Should Call' => [[$id]],
-                'Call With' => [$id],
-            ],
-            'Method `retrieve`' => [
-                'Method' => 'retrieve',
-                'Should Call' => [['a', 'b', 'c'], [$id], $type],
-                'Call With' => [['a', 'b', 'c'], $id, $type],
-            ],
-            'Method `undelete`' => [
-                'Method' => 'undelete',
-                'Should Call' => [[$id]],
-                'Call With' => [$id],
-            ],
-            'Method `upsert`' => [
-                'Method' => 'upsert',
-                'Should Call' => ['externalIdFieldName', [$sObject], $type],
-                'Call With' => ['externalIdFieldName', $sObject, $type],
-            ],
-            'Method `describeSObject' => [
-                'Method' => 'describeSObjects',
-                'Should Call' => [[$type]],
-                'Call With' => [$type],
-                'Method One' => 'describeSObject',
-            ],
+        yield 'Method `update`' => [
+            'Method' => 'update',
+            'Should Call' => [[$sObject], $type],
+            'Call With' => [$sObject, $type],
+        ];
+        yield 'Method `create`' => [
+            'Method' => 'create',
+            'Should Call' => [[$sObject], $type],
+            'Call With' => [$sObject, $type],
+        ];
+        yield 'Method `create` stdClass' => [
+            'Method' => 'create',
+            'Should Call' => [[$genericObject], $type],
+            'Call With' => [$genericObject, $type],
+        ];
+        yield 'Method `delete`' => [
+            'Method' => 'delete',
+            'Should Call' => [[$id]],
+            'Call With' => [$id],
+        ];
+        yield 'Method `retrieve`' => [
+            'Method' => 'retrieve',
+            'Should Call' => [['a', 'b', 'c'], [$id], $type],
+            'Call With' => [['a', 'b', 'c'], $id, $type],
+        ];
+        yield 'Method `undelete`' => [
+            'Method' => 'undelete',
+            'Should Call' => [[$id]],
+            'Call With' => [$id],
+        ];
+        yield 'Method `upsert`' => [
+            'Method' => 'upsert',
+            'Should Call' => ['externalIdFieldName', [$sObject], $type],
+            'Call With' => ['externalIdFieldName', $sObject, $type],
+        ];
+        yield 'Method `describeSObject' => [
+            'Method' => 'describeSObjects',
+            'Should Call' => [[$type]],
+            'Call With' => [$type],
+            'Method One' => 'describeSObject',
         ];
     }
 
@@ -323,7 +309,7 @@ class ClientTest extends \PHPUnit\Framework\TestCase
      * @covers ::<!public>
      * @expectedException \InvalidArgumentException
      */
-    public function testCreateInvalidSObject()
+    public function testCreateInvalidSObject(): void
     {
         $client = $this->getClient();
 
@@ -335,7 +321,7 @@ class ClientTest extends \PHPUnit\Framework\TestCase
      * @covers ::delete
      * @dataProvider deleteDataProvider
      */
-    public function testDelete(array $ids, $callArg)
+    public function testDelete(array $ids, $callArg): void
     {
         $results = [new DeleteResult(), new DeleteResult(), new DeleteResult()];
         $property = new \ReflectionProperty(DeleteResult::class, 'success');
@@ -346,34 +332,33 @@ class ClientTest extends \PHPUnit\Framework\TestCase
 
         $client = $this->getClient(['call']);
         $client
-            ->expects($this->once())
+            ->expects(self::once())
             ->method('call')
             ->with('delete', ['ids' => $ids])
             ->willReturn($results);
 
         $result = $client->delete($callArg);
 
-        $this->assertSame(
+        self::assertSame(
             $results,
             $result,
             'The internal call results should be passed through',
         );
     }
 
-    public function deleteDataProvider(): array
+    public function deleteDataProvider(): iterable
     {
         $ids = ['a', 'b', 'c'];
 
-        return [
-            'Simple IDs' => [$ids, $ids],
-            'Objects' => [
-                $ids,
-                array_map(function ($id): SObject {
-                    $item = new SObject();
-                    $item->Id = $id;
-                    return $item;
-                }, $ids),
-            ],
+        yield 'Simple IDs' => [$ids, $ids];
+
+        yield 'Objects' => [
+            $ids,
+            array_map(static function ($id): SObject {
+                $item = new SObject();
+                $item->Id = $id;
+                return $item;
+            }, $ids),
         ];
     }
 
@@ -381,7 +366,7 @@ class ClientTest extends \PHPUnit\Framework\TestCase
      * @covers ::upsertOne
      * @covers ::<!public>
      */
-    public function testUpsertOneAlternateOutput()
+    public function testUpsertOneAlternateOutput(): void
     {
         $externalIdFieldName = 'Test';
         $type = 'Contact';
@@ -418,7 +403,7 @@ class ClientTest extends \PHPUnit\Framework\TestCase
 
         $client = $this->getClient(['call']);
         $client
-            ->expects($this->once())
+            ->expects(self::once())
             ->method('call')
             ->with('upsert', [
                 'externalIDFieldName' => $externalIdFieldName,
@@ -428,7 +413,7 @@ class ClientTest extends \PHPUnit\Framework\TestCase
 
         $result = $client->upsertOne($externalIdFieldName, $input, $type);
 
-        $this->assertEquals(
+        self::assertEquals(
             $expectedResult,
             $result,
             'The raw object should be converted to an UpsertResult',
@@ -439,27 +424,22 @@ class ClientTest extends \PHPUnit\Framework\TestCase
      * @covers ::getWriter
      * @covers ::<!public>
      */
-    public function testGetWriter()
+    public function testGetWriter(): void
     {
         $client = $this->getClient();
 
         $result = $client->getWriter();
-        $this->assertInstanceOf(
-            Writer::class,
-            $result,
-            'A Writer instance should be returned',
-        );
 
         $property = new \ReflectionProperty($result, 'client');
         $property->setAccessible(true);
-        $this->assertSame(
+        self::assertSame(
             $client,
             $property->getValue($result),
             'The client instance should be set on the Writer instance',
         );
 
         $result2 = $client->getWriter();
-        $this->assertSame(
+        self::assertSame(
             $result,
             $result2,
             'Multiple calls should return the same Writer instance',

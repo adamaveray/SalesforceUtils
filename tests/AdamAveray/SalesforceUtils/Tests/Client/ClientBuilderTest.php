@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace AdamAveray\SalesforceUtils\Tests\Client;
 
@@ -12,7 +13,9 @@ use Psr\Log\LoggerInterface;
  */
 class ClientBuilderTest extends \PHPUnit\Framework\TestCase
 {
-    private const PATH_VENDOR = __DIR__ . '/../../../../../vendor';
+    private const DUMMY_WSDL_PATH =
+        __DIR__ .
+        '/../../../../../vendor/phpforce/soap-client/tests/Phpforce/SoapClient/Tests/Fixtures/sandbox.enterprise.wsdl.xml';
 
     /**
      * @covers ::__construct
@@ -21,18 +24,15 @@ class ClientBuilderTest extends \PHPUnit\Framework\TestCase
      * @covers ::<!public>
      * @dataProvider buildDataProvider
      */
-    public function testBuild(LoggerInterface $log = null)
+    public function testBuild(LoggerInterface $log = null): void
     {
-        $wsdl =
-            self::PATH_VENDOR .
-            '/phpforce/soap-client/tests/Phpforce/SoapClient/Tests/Fixtures/sandbox.enterprise.wsdl.xml';
         $username = 'username';
         $password = 'password';
         $token = 'token';
         $options = ['test-option' => 'test-value'];
 
         $builder = new ClientBuilder(
-            $wsdl,
+            self::DUMMY_WSDL_PATH,
             $username,
             $password,
             $token,
@@ -44,7 +44,7 @@ class ClientBuilderTest extends \PHPUnit\Framework\TestCase
 
         $client = $builder->build();
 
-        $this->assertInstanceOf(
+        self::assertInstanceOf(
             ClientInterface::class,
             $client,
             'A ClientInterface instance should be returned',
@@ -57,7 +57,7 @@ class ClientBuilderTest extends \PHPUnit\Framework\TestCase
         $soapClient = $property->getValue($client);
 
         // Test auth properties
-        $this->assertInstanceOf(
+        self::assertInstanceOf(
             \SoapClient::class,
             $soapClient,
             'A SoapClient should be set on the generated Client',
@@ -70,7 +70,7 @@ class ClientBuilderTest extends \PHPUnit\Framework\TestCase
         foreach ($props as $prop => $value) {
             $property = new \ReflectionProperty($client, $prop);
             $property->setAccessible(true);
-            $this->assertEquals(
+            self::assertEquals(
                 $value,
                 $property->getValue($client),
                 'The ' . $prop . ' should be set on the generated Client',
@@ -83,7 +83,7 @@ class ClientBuilderTest extends \PHPUnit\Framework\TestCase
             $listener = $dispatcher->getListeners($event)[0] ?? null;
 
             if ($log === null) {
-                $this->assertNull(
+                self::assertNull(
                     $listener,
                     'No logging events should be set if logger not set',
                 );
@@ -91,7 +91,7 @@ class ClientBuilderTest extends \PHPUnit\Framework\TestCase
             }
 
             // Ensure listener correct format
-            $this->assertInstanceOf(
+            self::assertInstanceOf(
                 LogPlugin::class,
                 $listener[0] ?? null,
                 'A LogPlugin instance callback for event "' .
@@ -100,7 +100,7 @@ class ClientBuilderTest extends \PHPUnit\Framework\TestCase
             );
 
             // Ensure listener is for specified method
-            $this->assertEquals(
+            self::assertEquals(
                 $method,
                 $listener[1] ?? null,
                 'The correct callback method for event "' .
@@ -111,7 +111,7 @@ class ClientBuilderTest extends \PHPUnit\Framework\TestCase
             // Ensure listener will call specified logger
             $property = new \ReflectionProperty($listener[0], 'logger');
             $property->setAccessible(true);
-            $this->assertSame(
+            self::assertSame(
                 $log,
                 $property->getValue($listener[0]),
                 'The LogPlugin instance should call the specified Log instance',
@@ -119,13 +119,11 @@ class ClientBuilderTest extends \PHPUnit\Framework\TestCase
         }
     }
 
-    public function buildDataProvider(): array
+    public function buildDataProvider(): iterable
     {
-        $log = $this->getMockForAbstractClass(LoggerInterface::class);
+        yield 'No log' => [null];
 
-        return [
-            'No log' => [null],
-            'With log' => [$log],
-        ];
+        $log = $this->getMockForAbstractClass(LoggerInterface::class);
+        yield 'With log' => [$log];
     }
 }

@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace AdamAveray\SalesforceUtils\Tests\Data;
 
@@ -15,7 +16,7 @@ class SaveFailureExceptionTest extends \PHPUnit\Framework\TestCase
      * @covers ::__construct
      * @covers ::getResult
      */
-    public function testException()
+    public function testException(): void
     {
         $recordId = '12345';
         $message = 'Save failure: ' . $recordId;
@@ -27,22 +28,22 @@ class SaveFailureExceptionTest extends \PHPUnit\Framework\TestCase
             ->setMethods(['getId'])
             ->getMock();
         $mock
-            ->expects($this->once())
+            ->expects(self::once())
             ->method('getId')
             ->willReturn($recordId);
 
         $exception = new SaveFailureException($mock, $previous);
-        $this->assertEquals(
+        self::assertEquals(
             $message,
             $exception->getMessage(),
             'The correct message should be generated',
         );
-        $this->assertSame(
+        self::assertSame(
             $mock,
             $exception->getResult(),
             'The save result should be stored',
         );
-        $this->assertSame(
+        self::assertSame(
             $previous,
             $exception->getPrevious(),
             'Previous exceptions should be stored',

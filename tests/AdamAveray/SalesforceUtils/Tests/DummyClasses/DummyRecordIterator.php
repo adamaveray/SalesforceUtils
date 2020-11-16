@@ -1,4 +1,5 @@
 <?php
+declare(strict_types=1);
 
 namespace AdamAveray\SalesforceUtils\Tests\DummyClasses;
 
@@ -19,27 +20,27 @@ class DummyRecordIterator extends RecordIterator
         return $this->values[$this->i] ?? null;
     }
 
-    public function next()
+    public function next(): void
     {
         $this->i++;
     }
 
-    public function key()
+    public function key(): int
     {
         return $this->i;
     }
 
-    public function valid()
+    public function valid(): bool
     {
         return $this->current() !== null;
     }
 
-    public function rewind()
+    public function rewind(): void
     {
         $this->i = 0;
     }
 
-    public function count()
+    public function count(): int
     {
         return count($this->values);
     }
