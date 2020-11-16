@@ -1,7 +1,8 @@
 <?php
 namespace AdamAveray\SalesforceUtils\Data;
 
-class Picklist {
+class Picklist
+{
     public const SEPARATOR = ';';
 
     /** @var array $values */
@@ -11,14 +12,16 @@ class Picklist {
      * @param array|null $values The initial values for the picklist
      * @see ::fromString
      */
-    public function __construct(array $values = null) {
-        $this->values = (array)$values;
+    public function __construct(array $values = null)
+    {
+        $this->values = (array) $values;
     }
 
     /**
      * @return array All values in the picklist
      */
-    public function getValues(): array {
+    public function getValues(): array
+    {
         return $this->values;
     }
 
@@ -26,9 +29,10 @@ class Picklist {
      * @param mixed $value The value to locate
      * @return int|null The index for $value, or null if not present
      */
-    private function find($value): ?int {
+    private function find($value): ?int
+    {
         $index = array_search($value, $this->values, true);
-        return ($index === false) ? null : $index;
+        return $index === false ? null : $index;
     }
 
     /**
@@ -37,7 +41,8 @@ class Picklist {
      * @param mixed $value The value to add
      * @return $this
      */
-    public function add($value): self {
+    public function add($value): self
+    {
         if (!$this->contains($value)) {
             $this->values[] = $value;
         }
@@ -50,7 +55,8 @@ class Picklist {
      * @param mixed $value The value to remove
      * @return $this
      */
-    public function remove($value): self {
+    public function remove($value): self
+    {
         $index = $this->find($value);
         if ($index !== null) {
             unset($this->values[$index]);
@@ -62,14 +68,16 @@ class Picklist {
      * @param mixed $value
      * @return bool
      */
-    public function contains($value): bool {
+    public function contains($value): bool
+    {
         return $this->find($value) !== null;
     }
 
     /**
      * @return string The serialised string for the picklist
      */
-    public function __toString(): string {
+    public function __toString(): string
+    {
         return implode(self::SEPARATOR, $this->values);
     }
 
@@ -78,7 +86,10 @@ class Picklist {
      * @param bool $stripWhitespace Whether to trim surrounding whitespace from each item
      * @return Picklist
      */
-    public static function fromString(string $string, bool $stripWhitespace = true): self {
+    public static function fromString(
+        string $string,
+        bool $stripWhitespace = true
+    ): self {
         $parts = explode(self::SEPARATOR, $string);
         if ($stripWhitespace) {
             $parts = array_map('trim', $parts);

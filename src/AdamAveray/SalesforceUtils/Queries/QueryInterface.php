@@ -5,7 +5,8 @@ use Phpforce\SoapClient\Result\QueryResult;
 use Phpforce\SoapClient\Result\RecordIterator;
 use Phpforce\SoapClient\Result\SObject;
 
-interface QueryInterface {
+interface QueryInterface
+{
     /**
      * @param array|null $args Arguments to bind before executing
      * @return RecordIterator

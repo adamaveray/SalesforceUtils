@@ -6,7 +6,8 @@ use AdamAveray\SalesforceUtils\Client\ClientInterface;
 use Phpforce\SoapClient\Result\SaveResult;
 use Phpforce\SoapClient\Result\SObject;
 
-class Writer {
+class Writer
+{
     const FIELD_RECORD_TYPE_ID = 'RecordTypeId';
 
     /** @var ClientInterface $client */
@@ -15,7 +16,8 @@ class Writer {
     /**
      * @param ClientInterface $client
      */
-    public function __construct(ClientInterface $client) {
+    public function __construct(ClientInterface $client)
+    {
         $this->client = $client;
     }
 
@@ -26,11 +28,15 @@ class Writer {
      * @return SaveResult
      * @throws SaveFailureException The create was unsuccessful
      */
-    public function create(string $type, $values, ?string $recordTypeId = null): SaveResult {
+    public function create(
+        string $type,
+        $values,
+        ?string $recordTypeId = null
+    ): SaveResult {
         if (is_object($values)) {
             $object = $values;
         } else {
-            $object = (object)$values;
+            $object = (object) $values;
         }
 
         if ($recordTypeId !== null) {
@@ -49,11 +55,12 @@ class Writer {
      * @return SaveResult
      * @throws SaveFailureException The update was unsuccessful
      */
-    public function update(string $type, $base, array $updates): SaveResult {
+    public function update(string $type, $base, array $updates): SaveResult
+    {
         if ($base instanceof SObject) {
             $baseId = $base->getId();
         } else {
-            $baseId = (string)$base;
+            $baseId = (string) $base;
         }
 
         $object = $this->buildSObject($baseId, $updates);
@@ -66,14 +73,15 @@ class Writer {
      * @param array $values Additional values to assign to the object
      * @return SObject
      */
-    public function buildSObject(?string $id, array $values): SObject {
+    public function buildSObject(?string $id, array $values): SObject
+    {
         $object = new SObject();
         if ($id !== null) {
             $object->Id = $id;
         }
         foreach ($values as $key => $value) {
             if (is_object($value)) {
-                $value = (string)$value;
+                $value = (string) $value;
             }
             $object->{$key} = $value;
         }
@@ -85,7 +93,8 @@ class Writer {
      * @return SaveResult
      * @throws SaveFailureException The given $result was not successful
      */
-    private function handleResult(SaveResult $result): SaveResult {
+    private function handleResult(SaveResult $result): SaveResult
+    {
         if (!$result->isSuccess()) {
             throw new SaveFailureException($result);
         }

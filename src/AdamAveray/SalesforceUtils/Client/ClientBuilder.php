@@ -4,7 +4,8 @@ namespace AdamAveray\SalesforceUtils\Client;
 use Phpforce\SoapClient\Plugin\LogPlugin;
 use Psr\Log\LoggerInterface;
 
-class ClientBuilder {
+class ClientBuilder
+{
     /** @var string $wsdl */
     protected $wsdl;
     /** @var string $username */
@@ -25,14 +26,23 @@ class ClientBuilder {
      * @param null|string $token The security token for the given user
      * @param array $soapOptions Options to pass to the SoapClient
      */
-    public function __construct(string $wsdl, string $username, string $password, ?string $token = null, array $soapOptions = []) {
-        $this->wsdl        = $wsdl;
-        $this->username    = $username;
-        $this->password    = $password;
-        $this->token       = $token;
-        $this->soapOptions = array_merge([
-		    'exceptions' => true,
-        ], $soapOptions);
+    public function __construct(
+        string $wsdl,
+        string $username,
+        string $password,
+        ?string $token = null,
+        array $soapOptions = []
+    ) {
+        $this->wsdl = $wsdl;
+        $this->username = $username;
+        $this->password = $password;
+        $this->token = $token;
+        $this->soapOptions = array_merge(
+            [
+                'exceptions' => true,
+            ],
+            $soapOptions,
+        );
     }
 
     /**
@@ -41,7 +51,8 @@ class ClientBuilder {
      * @param LoggerInterface $log
      * @return $this
      */
-    public function withLog(LoggerInterface $log) {
+    public function withLog(LoggerInterface $log)
+    {
         $this->log = $log;
         return $this;
     }
@@ -49,11 +60,20 @@ class ClientBuilder {
     /**
      * @return Client
      */
-    public function build() {
+    public function build()
+    {
         $soapClientFactory = new SoapClientFactory();
-        $soapClient        = $soapClientFactory->factory($this->wsdl, $this->soapOptions);
+        $soapClient = $soapClientFactory->factory(
+            $this->wsdl,
+            $this->soapOptions,
+        );
 
-        $client = new Client($soapClient, $this->username, $this->password, $this->token);
+        $client = new Client(
+            $soapClient,
+            $this->username,
+            $this->password,
+            $this->token,
+        );
 
         if ($this->log !== null) {
             $logPlugin = new LogPlugin($this->log);

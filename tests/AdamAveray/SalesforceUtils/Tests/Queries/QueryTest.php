@@ -1,4 +1,5 @@
 <?php
+
 namespace AdamAveray\SalesforceUtils\Tests\Queries;
 
 use AdamAveray\SalesforceUtils\Queries\Query;
@@ -12,12 +13,14 @@ use PHPUnit\Framework\MockObject\MockObject;
 /**
  * @coversDefaultClass \AdamAveray\SalesforceUtils\Queries\Query
  */
-class QueryTest extends \PHPUnit\Framework\TestCase {
+class QueryTest extends \PHPUnit\Framework\TestCase
+{
     /**
      * @param array|null $methods
      * @return MockObject|ClientInterface
      */
-    private function getClient(array $methods = null) {
+    private function getClient(array $methods = null)
+    {
         $builder = $this->getMockBuilder(ClientInterface::class);
         if ($methods !== null) {
             $builder->setMethods($methods);
@@ -31,7 +34,11 @@ class QueryTest extends \PHPUnit\Framework\TestCase {
      * @param null $iterator
      * @return ClientInterface|MockObject
      */
-    private function getQueryClient(string $string, array $values, &$iterator = null) {
+    private function getQueryClient(
+        string $string,
+        array $values,
+        &$iterator = null
+    ) {
         $iterator = new DummyRecordIterator($values);
 
         $client = $this->getClient(['query']);
@@ -49,22 +56,29 @@ class QueryTest extends \PHPUnit\Framework\TestCase {
      * @covers ::<!public>
      * @dataProvider buildDataProvider
      */
-    public function testBuild(string $expected, string $rawQuery, $globalArgs = null, $thisArgs = null) {
+    public function testBuild(
+        string $expected,
+        string $rawQuery,
+        $globalArgs = null,
+        $thisArgs = null
+    ) {
         $query = new Query($this->getClient(), $rawQuery, $globalArgs);
 
         $method = new \ReflectionMethod($query, 'build');
         $method->setAccessible(true);
         $result = $method->invoke($query, $thisArgs);
 
-        $this->assertEquals($expected, $result, 'The query should be processed and build correctly');
+        $this->assertEquals(
+            $expected,
+            $result,
+            'The query should be processed and build correctly',
+        );
     }
 
-    public function buildDataProvider(): array {
+    public function buildDataProvider(): array
+    {
         return [
-            'No params' => [
-                'TEST SOQL',
-                'TEST SOQL',
-            ],
+            'No params' => ['TEST SOQL', 'TEST SOQL'],
             'Global params' => [
                 'TEST SOQL \'test param one\' \'test param two\'',
                 'TEST SOQL :one :two',
@@ -101,30 +115,23 @@ class QueryTest extends \PHPUnit\Framework\TestCase {
                 ],
             ],
             'Safe string param' => [
-                'TEST SOQL "special'."\t".'chars"',
+                'TEST SOQL "special' . "\t" . 'chars"',
                 'TEST SOQL :one',
                 [
-                    'one' => new SafeString('"special'."\t".'chars"')
+                    'one' => new SafeString('"special' . "\t" . 'chars"'),
                 ],
             ],
             'Array param' => [
                 'TEST SOQL IN ( \'item one\', \'item two\', \'item three\' )',
                 'TEST SOQL IN :one',
                 [
-                    'one' => [
-                        'item one',
-                        'item two',
-                        'item three',
-                    ],
+                    'one' => ['item one', 'item two', 'item three'],
                 ],
             ],
             'Anonymous params' => [
                 'TEST SOQL \'param one\' \'param two\'',
                 'TEST SOQL ? ?',
-                [
-                    'param one',
-                    'param two',
-                ],
+                ['param one', 'param two'],
             ],
         ];
     }
@@ -134,7 +141,8 @@ class QueryTest extends \PHPUnit\Framework\TestCase {
      * @depends testBuild
      * @expectedException \OutOfBoundsException
      */
-    public function testBuildMissingParams() {
+    public function testBuildMissingParams()
+    {
         $this->testBuild('', 'TEST :param', [], []);
     }
 
@@ -142,57 +150,72 @@ class QueryTest extends \PHPUnit\Framework\TestCase {
      * @covers ::query
      * @depends testBuild
      */
-    public function testQuery() {
-        $string    = 'SOQL QUERY TEST';
+    public function testQuery()
+    {
+        $string = 'SOQL QUERY TEST';
         $stringRaw = 'SOQL QUERY ::test';
-        $args      = ['test' => 'TEST'];
+        $args = ['test' => 'TEST'];
 
         $client = $this->getQueryClient($string, ['a', 'b', 'c'], $expected);
-        $query  = new Query($client, $stringRaw);
+        $query = new Query($client, $stringRaw);
 
         $result = $query->query($args);
-        $this->assertSame($expected, $result, 'The result of ClientInterface::query() should be passed through');
+        $this->assertSame(
+            $expected,
+            $result,
+            'The result of ClientInterface::query() should be passed through',
+        );
     }
 
     /**
      * @covers ::queryAll
      * @depends testBuild
      */
-    public function testQueryAll() {
-        $values   = ['a', 'b', 'c'];
+    public function testQueryAll()
+    {
+        $values = ['a', 'b', 'c'];
 
-        $string    = 'SOQL QUERY TEST';
+        $string = 'SOQL QUERY TEST';
         $stringRaw = 'SOQL QUERY ::test';
-        $args      = ['test' => 'TEST'];
+        $args = ['test' => 'TEST'];
 
         $client = $this->getQueryClient($string, $values);
-        $query  = new Query($client, $stringRaw);
+        $query = new Query($client, $stringRaw);
 
         $result = $query->queryAll($args);
-        $this->assertSame($values, $result, 'The iterator’s values should be passed through');
+        $this->assertSame(
+            $values,
+            $result,
+            'The iterator’s values should be passed through',
+        );
     }
 
     /**
      * @covers ::queryOne
      * @depends testBuild
      */
-    public function testQueryOne() {
+    public function testQueryOne()
+    {
         $expected = new SObject();
 
-        $string    = 'SOQL QUERY TEST';
+        $string = 'SOQL QUERY TEST';
         $stringRaw = 'SOQL QUERY ::test';
-        $args      = ['test' => 'TEST'];
+        $args = ['test' => 'TEST'];
 
         // With results
         $client = $this->getQueryClient($string, [$expected, 'b', 'c']);
-        $query  = new Query($client, $stringRaw);
+        $query = new Query($client, $stringRaw);
 
         $result = $query->queryOne($args);
-        $this->assertSame($expected, $result, 'The result of ClientInterface::query() should be passed through');
+        $this->assertSame(
+            $expected,
+            $result,
+            'The result of ClientInterface::query() should be passed through',
+        );
 
         // No results
         $client = $this->getQueryClient($string, []);
-        $query  = new Query($client, $stringRaw);
+        $query = new Query($client, $stringRaw);
 
         $result = $query->queryOne($args);
         $this->assertNull($result, 'Null should be returned when no results');

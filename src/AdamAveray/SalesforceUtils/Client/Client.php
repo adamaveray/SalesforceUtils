@@ -13,17 +13,22 @@ use Phpforce\SoapClient\Result\SObject;
 use Phpforce\SoapClient\Result\UndeleteResult;
 use Phpforce\SoapClient\Result\UpsertResult;
 
-class Client extends \Phpforce\SoapClient\Client implements ClientInterface {
+class Client extends \Phpforce\SoapClient\Client implements ClientInterface
+{
     /** @var Writer $writer */
     private $writer;
 
     /** {@inheritdoc} */
-    public function prepare(string $query, array $globalArgs = null): QueryInterface {
+    public function prepare(
+        string $query,
+        array $globalArgs = null
+    ): QueryInterface {
         return new Query($this, $query, $globalArgs);
     }
 
     /** {@inheritdoc} */
-    public function rawQuery(string $query): RecordIterator {
+    public function rawQuery(string $query): RecordIterator
+    {
         return parent::query($query);
     }
 
@@ -32,7 +37,8 @@ class Client extends \Phpforce\SoapClient\Client implements ClientInterface {
      * @param array|null $args Arguments to bind to the query
      * @return \Phpforce\SoapClient\Result\RecordIterator
      */
-    public function query($query, array $args = null) {
+    public function query($query, array $args = null)
+    {
         if (!$query instanceof QueryInterface) {
             $query = $this->prepare($query);
         }
@@ -44,7 +50,8 @@ class Client extends \Phpforce\SoapClient\Client implements ClientInterface {
      * @param array|null $args Arguments to bind to the query
      * @return \Phpforce\SoapClient\Result\QueryResult[]
      */
-    public function queryAll($query, array $args = null) {
+    public function queryAll($query, array $args = null)
+    {
         if (!$query instanceof QueryInterface) {
             $query = $this->prepare($query);
         }
@@ -52,7 +59,8 @@ class Client extends \Phpforce\SoapClient\Client implements ClientInterface {
     }
 
     /** {@inheritdoc} */
-    public function queryOne($query, array $args = null): ?SObject {
+    public function queryOne($query, array $args = null): ?SObject
+    {
         if (!$query instanceof QueryInterface) {
             $query = $this->prepare($query);
         }
@@ -65,7 +73,8 @@ class Client extends \Phpforce\SoapClient\Client implements ClientInterface {
      * @param bool $quote Whether to quote the value
      * @return SafeString
      */
-    public function escape($value, $isLike = false, $quote = true): SafeString {
+    public function escape($value, $isLike = false, $quote = true): SafeString
+    {
         if (!$value instanceof SafeString) {
             $value = SafeString::escape($value, $isLike, $quote);
         }
@@ -73,21 +82,26 @@ class Client extends \Phpforce\SoapClient\Client implements ClientInterface {
     }
 
     /** {@inheritdoc} */
-    public function describeSObject(string $objectName): ?DescribeSObjectResult {
+    public function describeSObject(string $objectName): ?DescribeSObjectResult
+    {
         $result = $this->describeSObjects([$objectName]);
         return $result[0] ?? null;
     }
 
     /** {@inheritdoc} */
-    public function updateOne(SObject $object, string $type): SaveResult {
+    public function updateOne(SObject $object, string $type): SaveResult
+    {
         $result = $this->update([$object], $type);
         return $result[0];
     }
 
     /** {@inheritdoc} */
-    public function createOne($object, string $type): SaveResult {
+    public function createOne($object, string $type): SaveResult
+    {
         if ($object instanceof SObject && $object->Id === null) {
-            throw new \InvalidArgumentException('SObjects without IDs cannot be used for creation - use simple \\stdClass objects');
+            throw new \InvalidArgumentException(
+                'SObjects without IDs cannot be used for creation - use simple \\stdClass objects',
+            );
         }
 
         $result = $this->create([$object], $type);
@@ -95,7 +109,8 @@ class Client extends \Phpforce\SoapClient\Client implements ClientInterface {
     }
 
     /** {@inheritdoc} */
-    public function deleteOne($id): DeleteResult {
+    public function deleteOne($id): DeleteResult
+    {
         $result = $this->delete([$id]);
         return $result[0];
     }
@@ -104,7 +119,8 @@ class Client extends \Phpforce\SoapClient\Client implements ClientInterface {
      * @param array $ids      An array of object IDs or SObject instances
      * @return DeleteResult[]
      */
-    public function delete(array $ids) {
+    public function delete(array $ids)
+    {
         // Convert objects to IDs
         $processed = [];
         foreach ($ids as $id) {
@@ -118,23 +134,35 @@ class Client extends \Phpforce\SoapClient\Client implements ClientInterface {
     }
 
     /** {@inheritdoc} */
-    public function retrieveOne(array $fields, string $id, string $objectType): ?SObject {
+    public function retrieveOne(
+        array $fields,
+        string $id,
+        string $objectType
+    ): ?SObject {
         $result = $this->retrieve($fields, [$id], $objectType);
         return $result[0] ?? null;
     }
 
     /** {@inheritdoc} */
-    public function undeleteOne(string $id): UndeleteResult {
+    public function undeleteOne(string $id): UndeleteResult
+    {
         $result = $this->undelete([$id]);
         return $result[0];
     }
 
     /** {@inheritdoc} */
-    public function upsertOne($externalIdFieldName, SObject $object, $type): UpsertResult {
+    public function upsertOne(
+        $externalIdFieldName,
+        SObject $object,
+        $type
+    ): UpsertResult {
         $result = $this->upsert($externalIdFieldName, [$object], $type);
         $singleResult = $result[0];
         if ($singleResult instanceof \stdClass) {
-            $singleResult = self::castGenericObject($singleResult, UpsertResult::class);
+            $singleResult = self::castGenericObject(
+                $singleResult,
+                UpsertResult::class,
+            );
         }
         return $singleResult;
     }
@@ -142,7 +170,8 @@ class Client extends \Phpforce\SoapClient\Client implements ClientInterface {
     /**
      * @return Writer
      */
-    public function getWriter(): Writer {
+    public function getWriter(): Writer
+    {
         if ($this->writer === null) {
             $this->writer = new Writer($this);
         }
@@ -154,12 +183,15 @@ class Client extends \Phpforce\SoapClient\Client implements ClientInterface {
      * @param string $className The name of the class to instantiate
      * @return object An instance of $className with properties from $genericObject assigned
      */
-    private static function castGenericObject(\stdClass $genericObject, string $className): object {
-        $convertedObject = new $className;
+    private static function castGenericObject(
+        \stdClass $genericObject,
+        string $className
+    ): object {
+        $convertedObject = new $className();
         $reflectionClass = new \ReflectionClass($convertedObject);
         foreach ((array) $genericObject as $key => $value) {
             if ($reflectionClass->hasProperty($key)) {
-                $property =$reflectionClass->getProperty($key);
+                $property = $reflectionClass->getProperty($key);
                 $property->setAccessible(true);
                 $property->setValue($convertedObject, $value);
                 $property->setAccessible(false);

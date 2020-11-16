@@ -1,23 +1,24 @@
 <?php
 namespace AdamAveray\SalesforceUtils\Queries;
 
-class SafeString {
-    public const QUOTE_OPEN  = '\'';
+class SafeString
+{
+    public const QUOTE_OPEN = '\'';
     public const QUOTE_CLOSE = '\'';
-    public const VALUE_NULL  = 'null';
-    public const VALUE_TRUE  = 'TRUE';
+    public const VALUE_NULL = 'null';
+    public const VALUE_TRUE = 'TRUE';
     public const VALUE_FALSE = 'FALSE';
     public const DATETIME_FORMAT = 'c';
 
     /** @var array $charsAll A character map for characters to escape in all query params */
-    private static $charsAll  = [
-        "\n"    => '\\n',
-        "\r"    => '\\r',
-        "\t"    => '\\t',
+    private static $charsAll = [
+        "\n" => '\\n',
+        "\r" => '\\r',
+        "\t" => '\\t',
         "\u{7}" => '\\b',
-        "\f"    => '\\f',
-        '"'     => '\\"',
-        '\''    => '\\\'',
+        "\f" => '\\f',
+        '"' => '\\"',
+        '\'' => '\\\'',
     ];
     /** @var array $charsAll A character map for characters to escape in LIKE query params only */
     private static $charsLike = [
@@ -31,15 +32,17 @@ class SafeString {
     /**
      * @param string $string The safe string value
      */
-    public function __construct(string $string) {
+    public function __construct(string $string)
+    {
         $this->string = $string;
     }
 
     /**
      * @return string The safe string value
      */
-    public function __toString(): string {
-        return (string)$this->string;
+    public function __toString(): string
+    {
+        return (string) $this->string;
     }
 
     /**
@@ -48,7 +51,11 @@ class SafeString {
      * @param bool $quote Whether to quote the value
      * @return SafeString
      */
-    public static function escape($value, bool $isLike = false, bool $quote = false): SafeString {
+    public static function escape(
+        $value,
+        bool $isLike = false,
+        bool $quote = false
+    ): SafeString {
         $safe = self::escapeValue($value, $isLike, $quote);
         return new SafeString($safe);
     }
@@ -57,7 +64,8 @@ class SafeString {
      * @param array $value The array of values to escape
      * @return SafeString The array merged into a SOQL IN compatible string
      */
-    public static function escapeArray(array $value): SafeString {
+    public static function escapeArray(array $value): SafeString
+    {
         $out = [];
         foreach ($value as $item) {
             $out[] = self::escapeValue($item, false, true);
@@ -71,28 +79,36 @@ class SafeString {
      * @param bool $quote Whether to quote the value
      * @return string The escaped string value
      */
-    private static function escapeValue($value, bool $isLike = false, bool $quote = false): string {
+    private static function escapeValue(
+        $value,
+        bool $isLike = false,
+        bool $quote = false
+    ): string {
         if ($value === null) {
             $safe = self::VALUE_NULL;
-        } else if (is_bool($value)) {
+        } elseif (is_bool($value)) {
             $safe = $value ? self::VALUE_TRUE : self::VALUE_FALSE;
-        } else if (is_int($value) || is_float($value)) {
-            $safe = (string)$value;
-        } else if ($value instanceof \DateTimeInterface) {
+        } elseif (is_int($value) || is_float($value)) {
+            $safe = (string) $value;
+        } elseif ($value instanceof \DateTimeInterface) {
             $safe = $value->format(self::DATETIME_FORMAT);
         } else {
-            $value = (string)$value;
+            $value = (string) $value;
 
             // Escape special chars
             $chars = self::$charsAll;
             if ($isLike) {
                 $chars += self::$charsLike;
             }
-            $escaped = str_replace(array_keys($chars), array_values($chars), $value);
+            $escaped = str_replace(
+                array_keys($chars),
+                array_values($chars),
+                $value,
+            );
 
             $safe = $escaped;
             if ($quote) {
-                $safe = self::QUOTE_OPEN.$safe.self::QUOTE_CLOSE;
+                $safe = self::QUOTE_OPEN . $safe . self::QUOTE_CLOSE;
             }
         }
         return $safe;

@@ -5,7 +5,8 @@ use AdamAveray\SalesforceUtils\Queries\QueryInterface;
 use Phpforce\SoapClient\Result;
 use Phpforce\SoapClient\Result\SObject;
 
-interface ClientInterface extends \Phpforce\SoapClient\ClientInterface {
+interface ClientInterface extends \Phpforce\SoapClient\ClientInterface
+{
     /**
      * @param string $query
      * @return Result\RecordIterator
@@ -16,7 +17,9 @@ interface ClientInterface extends \Phpforce\SoapClient\ClientInterface {
      * @param string $objectName
      * @return Result\DescribeSObjectResult
      */
-    public function describeSObject(string $objectName): ?Result\DescribeSObjectResult;
+    public function describeSObject(
+        string $objectName
+    ): ?Result\DescribeSObjectResult;
 
     /**
      * Builds a QueryInterface object suitable for calling multiple times with different arguments
@@ -25,7 +28,10 @@ interface ClientInterface extends \Phpforce\SoapClient\ClientInterface {
      * @param array|null $globalArgs Arguments to bind to every execution of the query
      * @return QueryInterface
      */
-    public function prepare(string $query, array $globalArgs = null): QueryInterface;
+    public function prepare(
+        string $query,
+        array $globalArgs = null
+    ): QueryInterface;
 
     /**
      * @param string|QueryInterface $query The parameterised SOQL query, or a pre-prepared QueryInterface object
@@ -60,7 +66,11 @@ interface ClientInterface extends \Phpforce\SoapClient\ClientInterface {
      * @param string $objectType The type of object to fetch
      * @return SObject|null      The object, or `null` if not found
      */
-    public function retrieveOne(array $fields, string $id, string $objectType): ?SObject;
+    public function retrieveOne(
+        array $fields,
+        string $id,
+        string $objectType
+    ): ?SObject;
 
     /**
      * @param string $id      The ID of the object to undelete
@@ -74,5 +84,9 @@ interface ClientInterface extends \Phpforce\SoapClient\ClientInterface {
      * @param $type
      * @return Result\UpsertResult
      */
-    public function upsertOne($externalIdFieldName, SObject $object, $type): Result\UpsertResult;
+    public function upsertOne(
+        $externalIdFieldName,
+        SObject $object,
+        $type
+    ): Result\UpsertResult;
 }
