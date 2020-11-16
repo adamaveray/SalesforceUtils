@@ -12,6 +12,7 @@ use Phpforce\SoapClient\Result\DeleteResult;
 use Phpforce\SoapClient\Result\QueryResult;
 use Phpforce\SoapClient\Result\RecordIterator;
 use Phpforce\SoapClient\Result\SObject;
+use Phpforce\SoapClient\Result\UpsertResult;
 use Phpforce\SoapClient\Soap\SoapClient;
 use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\LoggerInterface;
@@ -374,6 +375,64 @@ class ClientTest extends \PHPUnit\Framework\TestCase
                 }, $ids),
             ],
         ];
+    }
+
+    /**
+     * @covers ::upsertOne
+     * @covers ::<!public>
+     */
+    public function testUpsertOneAlternateOutput()
+    {
+        $externalIdFieldName = 'Test';
+        $type = 'Contact';
+        $rawOutput = new \stdClass();
+        $rawOutput->success = true;
+        $rawOutput->created = true;
+        $rawOutput->id = 'xyz321';
+
+        $expectedResult = new UpsertResult();
+        foreach (
+            [
+                'success' => $rawOutput->success,
+                'created' => $rawOutput->created,
+                'id' => $rawOutput->id,
+            ]
+            as $propertyName => $value
+        ) {
+            $reflectionProperty = new \ReflectionProperty(
+                $expectedResult,
+                $propertyName,
+            );
+            $reflectionProperty->setAccessible(true);
+            $reflectionProperty->setValue($expectedResult, $value);
+            $reflectionProperty->setAccessible(false);
+        }
+
+        $input = new SObject();
+        $input->Id = 'abc123';
+        $inputSoapVar = new \SoapVar(
+            (object) ['Id' => $input->Id],
+            \SOAP_ENC_OBJECT,
+            $type,
+        );
+
+        $client = $this->getClient(['call']);
+        $client
+            ->expects($this->once())
+            ->method('call')
+            ->with('upsert', [
+                'externalIDFieldName' => $externalIdFieldName,
+                'sObjects' => [$inputSoapVar],
+            ])
+            ->willReturn([$rawOutput]);
+
+        $result = $client->upsertOne($externalIdFieldName, $input, $type);
+
+        $this->assertEquals(
+            $expectedResult,
+            $result,
+            'The raw object should be converted to an UpsertResult',
+        );
     }
 
     /**
