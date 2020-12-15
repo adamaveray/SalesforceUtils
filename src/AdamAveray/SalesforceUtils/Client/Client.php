@@ -180,6 +180,23 @@ class Client extends \Phpforce\SoapClient\Client implements ClientInterface
         return $this->writer;
     }
 
+    /** {@inheritDoc} */
+    protected function createSoapVars(array $objects, $type): array
+    {
+        // Strip null ID values
+        foreach ($objects as $i => $object) {
+            if (!($object instanceof SObject) || $object->getId() !== null) {
+                continue;
+            }
+
+            $objectValues = (array) $object;
+            unset($objectValues['Id']);
+            $objects[$i] = (object) $objectValues;
+        }
+
+        return parent::createSoapVars($objects, $type);
+    }
+
     /**
      * @param \stdClass $genericObject The generic object to cast
      * @param string $className The name of the class to instantiate
